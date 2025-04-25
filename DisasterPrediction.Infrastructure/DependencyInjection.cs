@@ -1,5 +1,7 @@
 ﻿using DisasterPrediction.Application.Common.Interfaces;
 using DisasterPrediction.Application.Common.Interfaces.Auth;
+using DisasterPrediction.Application.Interfaces;
+using DisasterPrediction.Application.Services;
 using DisasterPrediction.Domain.Entities;
 using DisasterPrediction.Infrastructure.Data;
 using DisasterPrediction.Infrastructure.Services;
@@ -35,6 +37,7 @@ namespace DisasterPrediction.Infrastructure
 
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IRegionService, RegionService>();
 
             //services.AddHttpClient<IApiService, ApiService>();
 

@@ -1,4 +1,5 @@
-﻿using DisasterPrediction.Application.Common.Interfaces;
+﻿using AutoMapper;
+using DisasterPrediction.Application.Common.Interfaces;
 using DisasterPrediction.Application.Common.Utils;
 using System;
 using System.Collections;
@@ -14,11 +15,13 @@ namespace DisasterPrediction.Application.Common.BaseClass
     {
         public readonly ICurrentUserService _currentUserService;
         public readonly IApplicationDbContext _context;
+        public readonly IMapper _mapper;
 
-        public BaseService(IApplicationDbContext context, ICurrentUserService currentUserService)
+        public BaseService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper)
         {
             _context = context;
             _currentUserService = currentUserService;
+            _mapper = mapper;
         }
 
         public async Task FormatProperties<T>(T obj, string? requestTimeZoneId = null)
