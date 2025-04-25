@@ -11,5 +11,6 @@ namespace DisasterPrediction.Domain.Entities
         public string RegionId { get; set; } = default!;
         public string DisasterTypes { get; set; } = default!;
         public LocationCoordinates LocationCoordinates { get; set; } = default!;
+        public AlertSetting AlertSetting { get; set; } = default!;
     }
 }

@@ -8,9 +8,9 @@ namespace DisasterPrediction.Domain.Entities
 {
     public class LocationCoordinates
     {
-        public long LocationCoordinatesId { get; set; }
         public string RegionId { get; set; } = default!;
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
+        public Region Region { get; set; } = default!;
     }
 }
