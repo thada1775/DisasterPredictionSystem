@@ -13,15 +13,15 @@ namespace DisasterPrediction.Application.Common.BaseClass
 {
     public class BaseService
     {
-        public readonly ICurrentUserService _currentUserService;
-        public readonly IApplicationDbContext _context;
-        public readonly IMapper _mapper;
+        public readonly ICurrentUserService CurrentUserService;
+        public readonly IApplicationDbContext Context;
+        public readonly IMapper Mapper;
 
         public BaseService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper)
         {
-            _context = context;
-            _currentUserService = currentUserService;
-            _mapper = mapper;
+            Context = context;
+            CurrentUserService = currentUserService;
+            Mapper = mapper;
         }
 
         public async Task FormatProperties<T>(T obj, string? requestTimeZoneId = null)
@@ -31,8 +31,8 @@ namespace DisasterPrediction.Application.Common.BaseClass
 
             string timeZoneId = "Asia/Bangkok";
 
-            if (!string.IsNullOrWhiteSpace(_currentUserService.UserId))
-                timeZoneId = (await _context.Users.FindAsync(_currentUserService.UserId))?.TimeZoneId ?? timeZoneId;
+            if (!string.IsNullOrWhiteSpace(CurrentUserService.UserId))
+                timeZoneId = (await Context.Users.FindAsync(CurrentUserService.UserId))?.TimeZoneId ?? timeZoneId;
 
             var timeZone = TimeZoneInfo.FindSystemTimeZoneById(requestTimeZoneId ?? timeZoneId);
 
@@ -46,8 +46,8 @@ namespace DisasterPrediction.Application.Common.BaseClass
 
             string timeZoneId = "Asia/Bangkok";
 
-            if (!string.IsNullOrWhiteSpace(_currentUserService.UserId))
-                timeZoneId = (await _context.Users.FindAsync(_currentUserService.UserId))?.TimeZoneId ?? timeZoneId;
+            if (!string.IsNullOrWhiteSpace(CurrentUserService.UserId))
+                timeZoneId = (await Context.Users.FindAsync(CurrentUserService.UserId))?.TimeZoneId ?? timeZoneId;
 
             var timeZone = TimeZoneInfo.FindSystemTimeZoneById(requestTimeZoneId ?? timeZoneId);
             FindTypeConvertDateTime(obj,timeZone);

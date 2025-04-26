@@ -7,6 +7,7 @@ using DisasterPrediction.Application.DTOs;
 using DisasterPrediction.Application.Interfaces;
 using DisasterPrediction.Domain.Entities;
 using DisasterPrediction.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,21 +24,21 @@ namespace DisasterPrediction.Application.Services
         {
         }
 
-        public async Task<RegionDto> CreateAsync(RegionDto request)
+        public async Task<RegionDto> CreateEntityAsync(RegionDto request)
         {
             ValidateCreate(request);
-            var entity = _mapper.Map<Region>(request);
+            var entity = Mapper.Map<Region>(request);
             entity.DisasterTypes = JsonSerializer.Serialize(request.DisasterTypes);
-            await _context.Regions.AddAsync(entity);
-            await _context.SaveChangesAsync();
+            await Context.Regions.AddAsync(entity);
+            await Context.SaveChangesAsync();
 
-            var result = _mapper.Map<RegionDto>(entity);
+            var result = Mapper.Map<RegionDto>(entity);
             if (!string.IsNullOrWhiteSpace(entity.DisasterTypes))
-                result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes)!;
+                result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes) ?? new List<string>();
             return result;
         }
 
-        public async Task<RegionDto> UpdateAsync(RegionDto request)
+        public async Task<RegionDto> UpdateEntityAsync(RegionDto request)
         {
             var entity = await ValidateUpdate(request);
             if (entity.LocationCoordinates == null)
@@ -46,11 +47,54 @@ namespace DisasterPrediction.Application.Services
             entity.LocationCoordinates.Latitude = request.LocationCoordinates.Latitude;
             entity.LocationCoordinates.Longitude = request.LocationCoordinates.Longitude;
 
-            await _context.SaveChangesAsync();
+            await Context.SaveChangesAsync();
 
-            var result = _mapper.Map<RegionDto>(entity);
+            var result = Mapper.Map<RegionDto>(entity);
             if (!string.IsNullOrWhiteSpace(entity.DisasterTypes))
                 result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes)!;
+            return result;
+        }
+
+        public async Task DeleteEntityAsync(string id)
+        {
+            var entity = await ValidateDelete(id);
+
+            Context.Regions.Remove(entity);
+            await Context.SaveChangesAsync();
+        }
+
+        public async Task<RegionDto> GetEntityAsync(string id)
+        {
+            var entity = await Context.Regions.Where(x => x.RegionId == id).Include(x => x.LocationCoordinates).FirstOrDefaultAsync();
+            var result = Mapper.Map<RegionDto>(entity);
+
+            if (entity != null && !string.IsNullOrWhiteSpace(entity.DisasterTypes))
+                result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes) ?? new List<string>();
+
+            return result;
+        }
+
+
+        public async Task<List<RegionDto>> FindEntityuAsync()
+        {
+            var result = await Context.Regions.Include(x => x.LocationCoordinates)
+                .Select(x => new RegionDto()
+                {
+                    RegionId = x.RegionId,
+                    LocationCoordinates = new LocationCoordinatesDto()
+                    {
+                        Latitude = x.LocationCoordinates.Latitude,
+                        Longitude = x.LocationCoordinates.Longitude
+                    },
+                    DisasaterTypesString = x.DisasterTypes
+                }).ToListAsync();
+
+            foreach (var entity in result)
+            {
+                if (!string.IsNullOrWhiteSpace(entity.DisasaterTypesString))
+                    entity.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasaterTypesString) ?? new List<string>();
+            }
+
             return result;
         }
 
@@ -74,7 +118,15 @@ namespace DisasterPrediction.Application.Services
         private async Task<Region> ValidateUpdate(RegionDto request)
         {
             ValidateCreate(request);
-            var entity = await _context.Regions.FindAsync(request.RegionId);
+            var entity = await Context.Regions.FindAsync(request.RegionId);
+            if (entity == null)
+                throw new NotFoundException("Target was not found");
+
+            return entity;
+        }
+        private async Task<Region> ValidateDelete(string id)
+        {
+            var entity = await Context.Regions.FindAsync(id);
             if (entity == null)
                 throw new NotFoundException("Target was not found");
 

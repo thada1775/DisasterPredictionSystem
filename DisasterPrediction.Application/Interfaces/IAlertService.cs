@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DisasterPrediction.Application.Interfaces
 {
-    public interface IRegionService
+    public interface IAlertService
     {
         Task<RegionDto> CreateEntityAsync(RegionDto request);
         Task<RegionDto> UpdateEntityAsync(RegionDto request);
