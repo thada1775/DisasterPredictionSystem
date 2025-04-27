@@ -1,0 +1,31 @@
+﻿using DisasterPrediction.Application.DTOs;
+using DisasterPrediction.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace DisasterPrediction.API.Controllers
+{
+    [ApiController]
+    [Route("api/alerts")]
+    public class AlertsController : ControllerBase
+    {
+        private readonly IAlertsService _service;
+        public AlertsController(IAlertsService service)
+        {
+            _service = service;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> FindSummary(AlertHistoryFilterDto filterDto)
+        {
+            var result = await _service.FindSummaryHistoryAsync(filterDto);
+            return Ok(result);
+        }
+
+        [HttpGet("{id:string}")]
+        public async Task<IActionResult> GetHistoryByRegion(string id)
+        {
+            var result = await _service.GetHistoryByRegionAsync(id);
+            return Ok(result);
+        }
+    }
+}

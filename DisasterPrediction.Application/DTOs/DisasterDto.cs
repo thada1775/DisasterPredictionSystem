@@ -4,15 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DisasterPrediction.Domain.Entities
+namespace DisasterPrediction.Application.DTOs
 {
-    public class AlertHistory
+    public class DisasterDto
     {
-        public long AlertHistoryId { get; set; }
         public string RegionId { get; set; } = default!;
         public string DisasterType { get; set; } = default!;
         public short RiskScore { get; set; }
-        public string RiskLevel { get; set; } = default!;
-        public DateTime CreateDate { get; set; }
+        public string? RiskLevel { get; set; }
+        public bool AlertTriggered { get; set; } = false;
     }
 }

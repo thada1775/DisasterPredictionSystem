@@ -6,6 +6,7 @@ using DisasterPrediction.Domain.Entities;
 using DisasterPrediction.Infrastructure.Data;
 using DisasterPrediction.Infrastructure.Services;
 using DisasterPrediction.Infrastructure.Services.Auth;
+using DisasterPrediction.Infrastructure.Services.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,8 +39,10 @@ namespace DisasterPrediction.Infrastructure
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IRegionService, RegionService>();
+            services.AddScoped<IAlertSettingService, AlertSettingService>();
+            services.AddScoped<IAlertsService, AlertsService>();
 
-            //services.AddHttpClient<IApiService, ApiService>();
+            services.AddHttpClient<IApiService, ApiService>();
 
             return services;
         }

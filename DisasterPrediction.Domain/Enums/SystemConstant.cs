@@ -20,25 +20,40 @@ namespace DisasterPrediction.Domain.Enums
             }
         }
 
-        public static class Project
+        public static class RiksLevel
         {
-            public const string View = "Permissions.Project.View";
-            public const string Create = "Permissions.Project.Create";
-            public const string Edit = "Permissions.Project.Edit";
-            public const string Delete = "Permissions.Project.Delete";
+            public const string High = "High";
+            public const string Medium = "Medium";
+            public const string Low = "Low";
         }
 
-        public static class Task
+        public static class Disaster
         {
-            public const string View = "Permissions.Task.View";
-            public const string Create = "Permissions.Task.Create";
-            public const string Edit = "Permissions.Task.Edit";
-            public const string Delete = "Permissions.Task.Delete";
+            public const string Flood = "flood";
+            public const string Earthquake = "earthquake";
+            public const string Wildfire = "wildfire";
         }
 
-        public static class User
-        {
-            public const string AllPermission = "Permissions.User.all";
-        }
+
+        //public static class Project
+        //{
+        //    public const string View = "Permissions.Project.View";
+        //    public const string Create = "Permissions.Project.Create";
+        //    public const string Edit = "Permissions.Project.Edit";
+        //    public const string Delete = "Permissions.Project.Delete";
+        //}
+
+        //public static class Task
+        //{
+        //    public const string View = "Permissions.Task.View";
+        //    public const string Create = "Permissions.Task.Create";
+        //    public const string Edit = "Permissions.Task.Edit";
+        //    public const string Delete = "Permissions.Task.Delete";
+        //}
+
+        //public static class User
+        //{
+        //    public const string AllPermission = "Permissions.User.all";
+        //}
     }
 }

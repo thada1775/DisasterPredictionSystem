@@ -4,6 +4,7 @@ using DisasterPrediction.Application.Common.Exceptions;
 using DisasterPrediction.Application.Common.Interfaces;
 using DisasterPrediction.Application.Common.Utils;
 using DisasterPrediction.Application.DTOs;
+using DisasterPrediction.Application.Interfaces;
 using DisasterPrediction.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -14,13 +15,13 @@ using System.Threading.Tasks;
 
 namespace DisasterPrediction.Application.Services
 {
-    public class AlertService : BaseService
+    public class AlertSettingService : BaseService , IAlertSettingService
     {
-        public AlertService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper) : base(context, currentUserService, mapper)
+        public AlertSettingService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper) : base(context, currentUserService, mapper)
         {
         }
 
-        public async Task<AlertSettingDto> CreateSetting(AlertSettingDto request)
+        public async Task<AlertSettingDto> CreateSettingAsync(AlertSettingDto request)
         {
             ValidateCreate(request);
             var entity = Mapper.Map<AlertSetting>(request);
@@ -31,7 +32,7 @@ namespace DisasterPrediction.Application.Services
             return result;
         }
 
-        public async Task<AlertSettingDto> UpdateEntityAsync(AlertSettingDto request)
+        public async Task<AlertSettingDto> UpdateSettingAsync(AlertSettingDto request)
         {
             var entity = await ValidateUpdate(request);
 
@@ -44,7 +45,7 @@ namespace DisasterPrediction.Application.Services
             return result;
         }
 
-        public async Task DeleteEntityAsync(string id)
+        public async Task DeleteSettingAsync(string id)
         {
             var entity = await ValidateDelete(id);
 
@@ -52,7 +53,7 @@ namespace DisasterPrediction.Application.Services
             await Context.SaveChangesAsync();
         }
 
-        public async Task<AlertSettingDto> GetEntityAsync(string id)
+        public async Task<AlertSettingDto> GetSettingAsync(string id)
         {
             var entity = await Context.AlertSettings.FirstOrDefaultAsync(x => x.RegionId == id);
             var result = Mapper.Map<AlertSettingDto>(entity);
@@ -60,11 +61,12 @@ namespace DisasterPrediction.Application.Services
             return result;
         }
 
-        public async Task<List<AlertSettingDto>> FindEntityuAsync()
+        public async Task<List<AlertSettingDto>> FindSettingAsync()
         {
             var result = Mapper.Map<List<AlertSettingDto>>(await Context.AlertSettings.ToListAsync());
             return result;
         }
+
 
         #region Private Method
         private void ValidateCreate(AlertSettingDto request)

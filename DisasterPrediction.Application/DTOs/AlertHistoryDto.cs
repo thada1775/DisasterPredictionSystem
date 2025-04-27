@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DisasterPrediction.Domain.Entities
+namespace DisasterPrediction.Application.DTOs
 {
-    public class AlertHistory
+    public class AlertHistoryDto
     {
         public long AlertHistoryId { get; set; }
         public string RegionId { get; set; } = default!;
