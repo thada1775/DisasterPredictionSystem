@@ -4,6 +4,7 @@ using DisasterPrediction.Application.Common.Exceptions;
 using DisasterPrediction.Application.Common.Interfaces;
 using DisasterPrediction.Application.Common.Utils;
 using DisasterPrediction.Application.DTOs;
+using DisasterPrediction.Application.DTOs.Earthquake;
 using DisasterPrediction.Application.DTOs.Weather;
 using DisasterPrediction.Application.Interfaces;
 using DisasterPrediction.Domain.Entities;
@@ -33,7 +34,7 @@ namespace DisasterPrediction.Application.Services
 
         public async Task<List<DisasterDto>> GetDisasterRisk()
         {
-            var allRegion = Context.Regions.Include(x => x.LocationCoordinates).ToList();
+            var allRegion = Context.Regions.Include(x => x.LocationCoordinates).Include(x => x.AlertSetting).ToList();
             if (ListUtil.IsEmptyList(allRegion))
                 throw new ValidationException("Region not found.");
 
@@ -44,13 +45,38 @@ namespace DisasterPrediction.Application.Services
 
             foreach (var region in allRegion)
             {
+                if (string.IsNullOrWhiteSpace(_configuration["WeatherApiKey"]))
+                    throw new ValidationException("ApiKey config missing.");
+
+                Dictionary<string, string> queryStrings = new Dictionary<string, string>()
+                {
+                    {"q",$"{region.LocationCoordinates?.Latitude},{region.LocationCoordinates?.Longitude}" }
+                };
+
+                var responseString = await _apiService.SendRequestAsync("http://api.weatherapi.com/v1/current.json", _configuration["WeatherApiKey"]!, HttpMethod.Get, null, queryStrings);
+                var currentWeather = JsonSerializer.Deserialize<WeatherApi>(responseString);
+
+                if (currentWeather == null)
+                    throw new ValidationException("Weather result not found");
+
+
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Flood.ToLower()))
                 {
-                    var disaster = await CalculateFloodRisk(region, alertHistories);
-                    result.Add(disaster);
+                    var disaster = CalculateFloodRisk(region, alertHistories, currentWeather);
+                    if (region.AlertSetting.ThresholdScore >= disaster.RiskScore)
+                        result.Add(disaster);
                 }
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Wildfire.ToLower()))
                 {
+                    var disaster = CalculateWildfireRiks(region, alertHistories, currentWeather);
+                    if (region.AlertSetting.ThresholdScore >= disaster.RiskScore)
+                        result.Add(disaster);
+                }
+                if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Earthquake.ToLower()))
+                {
+                    var disaster = await CalculateEarthquake(region, alertHistories, currentDateTime);
+                    if (disaster != null && (region.AlertSetting.ThresholdScore >= disaster.RiskScore))
+                        result.Add(disaster);
                 }
             }
 
@@ -58,22 +84,8 @@ namespace DisasterPrediction.Application.Services
         }
 
         #region Private Method
-        private async Task<DisasterDto> CalculateFloodRisk(Region region, List<AlertHistory> alertHistories)
+        private DisasterDto CalculateFloodRisk(Region region, List<AlertHistory> alertHistories, WeatherApi currentWeather)
         {
-            if (string.IsNullOrWhiteSpace(_configuration["WeatherApiKey"]))
-                throw new ValidationException("ApiKey config missing.");
-
-            Dictionary<string, string> queryStrings = new Dictionary<string, string>()
-            {
-                {"q",$"{region.LocationCoordinates?.Latitude},{region.LocationCoordinates?.Longitude}" }
-            };
-
-            var responseString = await _apiService.SendRequestAsync("http://api.weatherapi.com/v1/current.json", _configuration["WeatherApiKey"]!, HttpMethod.Get, null, queryStrings);
-            var currentWeather = JsonSerializer.Deserialize<WeatherApi>(responseString);
-
-            if (currentWeather == null)
-                throw new ValidationException("Weather result not found");
-
             DisasterDto warning = new DisasterDto()
             {
                 RegionId = region.RegionId,
@@ -100,10 +112,80 @@ namespace DisasterPrediction.Application.Services
 
             return warning;
         }
-        //private async Task<DisasterDto> CalculateWildfireRisk(Region region, List<AlertHistory> alertHistories)
-        //{
-        //    return null;
-        //}
+
+        private DisasterDto CalculateWildfireRiks(Region region, List<AlertHistory> alertHistories, WeatherApi currentWeather)
+        {
+            DisasterDto warning = new DisasterDto()
+            {
+                RegionId = region.RegionId,
+                DisasterType = SystemConstant.Disaster.Flood,
+                RiskScore = (short)((currentWeather.current.temp_c * 2) - currentWeather.current.humidity)
+            };
+
+            if (warning.RiskScore <= 30)
+                warning.RiskLevel = SystemConstant.RiksLevel.Low;
+            else if (warning.RiskScore >= 31 && warning.RiskScore <= 70)
+                warning.RiskLevel = SystemConstant.RiksLevel.Medium;
+            else
+                warning.RiskLevel = SystemConstant.RiksLevel.High;
+
+            if (alertHistories.Any(x => x.RegionId == region.RegionId && x.DisasterType.ToLower().Contains(SystemConstant.Disaster.Wildfire.ToLower())))
+                warning.AlertTriggered = true;
+
+            return warning;
+        }
+
+        private async Task<DisasterDto?> CalculateEarthquake(Region region, List<AlertHistory> alertHistories, DateTime currentDateTime)
+        {
+            Dictionary<string, string> queryStrings = new Dictionary<string, string>()
+                {
+                    {"format","geojson"},
+                    {"latitude",$"{region.LocationCoordinates.Latitude}"},
+                    {"longitude",$"{region.LocationCoordinates.Longitude}"},
+                    {"maxradiuskm","100"},
+                    {"starttime",currentDateTime.ToString("yyyy-MM-dd") },
+                    {"endtime",currentDateTime.AddDays(1).ToString("yyyy-MM-dd") }
+                };
+
+            var responseString = await _apiService.SendRequestAsync("https://earthquake.usgs.gov/fdsnws/event/1/query", null, HttpMethod.Get, null, queryStrings);
+            var currentEarthquake = JsonSerializer.Deserialize<EarthquakeApi>(responseString);
+
+            var matchedEarthquake = currentEarthquake?.features?.FirstOrDefault();
+            if (matchedEarthquake == null)
+                return null;
+
+            DisasterDto warning = new DisasterDto()
+            {
+                RegionId = region.RegionId,
+                DisasterType = SystemConstant.Disaster.Flood,
+            };
+
+            if (matchedEarthquake.properties.mag < 4.0)
+            {
+                warning.RiskScore = 10;
+                warning.RiskLevel = SystemConstant.RiksLevel.Low;
+            }
+            else if (matchedEarthquake.properties.mag >= 4.0 && matchedEarthquake.properties.mag <= 5.9)
+            {
+                warning.RiskScore = 55;
+                warning.RiskLevel = SystemConstant.RiksLevel.Medium;
+            }
+            else
+            {
+                warning.RiskScore = 90;
+                warning.RiskLevel = SystemConstant.RiksLevel.High;
+            }
+
+            var earthquakeDateTime = DateTimeOffset.FromUnixTimeMilliseconds(matchedEarthquake.properties.time).UtcDateTime;
+
+            if (alertHistories.Any(x => x.RegionId == region.RegionId && x.DisasterType.ToLower().Contains(SystemConstant.Disaster.Earthquake.ToLower())
+                                   && x.CreateDate < earthquakeDateTime))
+                warning.AlertTriggered = true;
+
+            return warning;
+
+        }
+
         #endregion
 
     }

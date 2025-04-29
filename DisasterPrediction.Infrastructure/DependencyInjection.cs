@@ -41,6 +41,7 @@ namespace DisasterPrediction.Infrastructure
             services.AddScoped<IRegionService, RegionService>();
             services.AddScoped<IAlertSettingService, AlertSettingService>();
             services.AddScoped<IAlertsService, AlertsService>();
+            services.AddScoped<IDisasterService, DisasterService>();
 
             services.AddHttpClient<IApiService, ApiService>();
 

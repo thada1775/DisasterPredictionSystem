@@ -4,7 +4,9 @@ using DisasterPrediction.Application.Common.Interfaces;
 using DisasterPrediction.Application.DTOs;
 using DisasterPrediction.Application.DTOs.Common;
 using DisasterPrediction.Application.Interfaces;
+using DisasterPrediction.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +17,13 @@ namespace DisasterPrediction.Application.Services
 {
     public class AlertsService : BaseService, IAlertsService
     {
-        public AlertsService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper) : base(context, currentUserService, mapper)
+        private readonly IApiService _apiService;
+        private readonly IConfiguration _configuration;
+        public AlertsService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper
+            , IApiService apiService, IConfiguration configuration) : base(context, currentUserService, mapper)
         {
+            _apiService = apiService;
+            _configuration = configuration;
         }
 
         public async Task<SearchResult<AlertHistoryDto>> FindSummaryHistoryAsync(AlertHistoryFilterDto filter)
@@ -59,10 +66,38 @@ namespace DisasterPrediction.Application.Services
             return result;
         }
 
-        public void SendWarningMessage()
+        public async void SendWarningMessage()
         {
+            var currentDateTime = DateTime.UtcNow;
+            var disasterService = new DisasterService(Context, CurrentUserService, Mapper, _apiService, _configuration);
+            var disasterRisks = await disasterService.GetDisasterRisk();
+            var moreRisks = disasterRisks.Where(x => !x.AlertTriggered).ToList();
 
+            var alertSendDtos = moreRisks.Select(x => new AlertSendDto()
+            {
+                RegionId = x.RegionId,
+                DisasterType = x.DisasterType,
+                RiskScore = x.RiskScore,
+                AlertMessage = "",
+                Timestamp = 
+            }).ToList();
+
+            //save data
         }
+
+        #region Private Method
+        private string FindAlertMessage(string disasterType)
+        {
+            string message = string.Empty;
+            switch (disasterType)
+            {
+                case SystemConstant.Disaster.Flood: message = 
+                default:
+                    break;
+            }
+        }
+
+        #endregion
 
     }
 }

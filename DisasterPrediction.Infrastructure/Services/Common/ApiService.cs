@@ -15,7 +15,7 @@ namespace DisasterPrediction.Infrastructure.Services.Common
         {
             _httpClient = httpClient;
         }
-        public async Task<string> SendRequestAsync(string url, string apiKey, HttpMethod method, object? requestBody = null, Dictionary<string, string> queryParams = null)
+        public async Task<string> SendRequestAsync(string url, string? apiKey, HttpMethod method, object? requestBody = null, Dictionary<string, string> queryParams = null)
         {
             try
             {
@@ -27,7 +27,8 @@ namespace DisasterPrediction.Infrastructure.Services.Common
                 using var request = new HttpRequestMessage(method, url);
                 request.Headers.Add("Authorization", $"Bearer {apiKey}");
                 request.Headers.Add("Accept", "application/json");
-                request.Headers.Add("apikey", apiKey);
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                    request.Headers.Add("apikey", apiKey);
 
                 if (requestBody != null && (method == HttpMethod.Post || method == HttpMethod.Put))
                 {
