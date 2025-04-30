@@ -56,19 +56,19 @@ namespace DisasterPrediction.Infrastructure
             {
                 "Admin" => new List<string>
                 {
-                    SystemConstant.User.AllPermission,
-                    SystemConstant.Project.View, SystemConstant.Project.Create, SystemConstant.Project.Edit, SystemConstant.Project.Delete,
-                    SystemConstant.Task.View, SystemConstant.Task.Create, SystemConstant.Task.Edit, SystemConstant.Task.Delete
+                    //SystemConstant.User.AllPermission,
+                    //SystemConstant.Project.View, SystemConstant.Project.Create, SystemConstant.Project.Edit, SystemConstant.Project.Delete,
+                    //SystemConstant.Task.View, SystemConstant.Task.Create, SystemConstant.Task.Edit, SystemConstant.Task.Delete
                 },
                 "Manager" => new List<string>
                 {
-                    SystemConstant.Project.View, SystemConstant.Project.Create, SystemConstant.Project.Edit, SystemConstant.Project.Delete,
-                    SystemConstant.Task.View, SystemConstant.Task.Create, SystemConstant.Task.Edit, SystemConstant.Task.Delete
+                    //SystemConstant.Project.View, SystemConstant.Project.Create, SystemConstant.Project.Edit, SystemConstant.Project.Delete,
+                    //SystemConstant.Task.View, SystemConstant.Task.Create, SystemConstant.Task.Edit, SystemConstant.Task.Delete
                 },
                 "User" => new List<string>
                 {
-                    SystemConstant.Project.View, SystemConstant.Project.Create, SystemConstant.Project.Edit, SystemConstant.Project.Delete,
-                    SystemConstant.Task.View, SystemConstant.Task.Create, SystemConstant.Task.Edit, SystemConstant.Task.Delete
+                    //SystemConstant.Project.View, SystemConstant.Project.Create, SystemConstant.Project.Edit, SystemConstant.Project.Delete,
+                    //SystemConstant.Task.View, SystemConstant.Task.Create, SystemConstant.Task.Edit, SystemConstant.Task.Delete
                 },
                 _ => new List<string>()
             };

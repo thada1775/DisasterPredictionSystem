@@ -10,3 +10,6 @@ Entity
 -Region
 -AlertSetting
 -AlertHistory
+
+
+*check sensitive case  for RegionId

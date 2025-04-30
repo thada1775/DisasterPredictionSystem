@@ -109,7 +109,7 @@ namespace DisasterPrediction.Application.Services
                 InsertErrorValidation(errorValidation, "RegionId", "Required.");
             if (dto.RegionId.Length > 50)
                 InsertErrorValidation(errorValidation, "RegionId", "Length more than 50");
-            if (!ListUtil.IsEmptyList(dto.DisasterTypes))
+            if (ListUtil.IsEmptyList(dto.DisasterTypes))
                 InsertErrorValidation(errorValidation, "DisasterTypes", "Required.");
 
             if (!ListUtil.IsEmptyList(errorValidation))
@@ -118,7 +118,7 @@ namespace DisasterPrediction.Application.Services
         private async Task<Region> ValidateUpdate(RegionDto request)
         {
             ValidateCreate(request);
-            var entity = await Context.Regions.FindAsync(request.RegionId);
+            var entity = await Context.Regions.Include(x => x.LocationCoordinates).FirstOrDefaultAsync(x => x.RegionId.ToLower() == request.RegionId.ToLower());
             if (entity == null)
                 throw new NotFoundException("Target was not found");
 

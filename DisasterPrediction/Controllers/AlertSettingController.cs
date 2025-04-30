@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DisasterPrediction.API.Controllers
 {
     [ApiController]
-    [Route("api/alert")]
+    [Route("api/alertSetting")]
     public class AlertSettingController : ControllerBase
     {
         private readonly IAlertSettingService _service;
@@ -22,19 +22,19 @@ namespace DisasterPrediction.API.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update(RegionDto request)
+        public async Task<IActionResult> Update(AlertSettingDto request)
         {
-            var updatedTask = await _service.UpdateEntityAsync(request);
+            var updatedTask = await _service.UpdateSettingAsync(request);
             return Ok(updatedTask);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task Delete(string id)
         {
             await _service.DeleteSettingAsync(id);
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> Get(string id)
         {
             var result = await _service.GetSettingAsync(id);

@@ -12,5 +12,6 @@ namespace DisasterPrediction.Application.Interfaces
     {
         Task<SearchResult<AlertHistoryDto>> FindSummaryHistoryAsync(AlertHistoryFilterDto filter);
         Task<List<AlertHistoryDto>> GetHistoryByRegionAsync(string id);
+        void SendWarningMessage();
     }
 }

@@ -30,13 +30,13 @@ namespace DisasterPrediction.API.Controllers
             return Ok(updatedTask);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task Delete(string id)
         {
             await _service.DeleteEntityAsync(id);
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> Get(string id)
         {
             var result = await _service.GetEntityAsync(id);

@@ -14,14 +14,14 @@ namespace DisasterPrediction.API.Controllers
             _service = service;
         }
 
-        [HttpPost]
+        [HttpPost("summary")]
         public async Task<IActionResult> FindSummary(AlertHistoryFilterDto filterDto)
         {
             var result = await _service.FindSummaryHistoryAsync(filterDto);
             return Ok(result);
         }
 
-        [HttpGet("{id:string}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetHistoryByRegion(string id)
         {
             var result = await _service.GetHistoryByRegionAsync(id);

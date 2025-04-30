@@ -50,10 +50,11 @@ namespace DisasterPrediction.Application.Services
 
                 Dictionary<string, string> queryStrings = new Dictionary<string, string>()
                 {
+                    {"key",_configuration["WeatherApiKey"]! },
                     {"q",$"{region.LocationCoordinates?.Latitude},{region.LocationCoordinates?.Longitude}" }
                 };
 
-                var responseString = await _apiService.SendRequestAsync("http://api.weatherapi.com/v1/current.json", _configuration["WeatherApiKey"]!, HttpMethod.Get, null, queryStrings);
+                var responseString = await _apiService.SendRequestAsync("http://api.weatherapi.com/v1/current.json", null, HttpMethod.Get, null, queryStrings);
                 var currentWeather = JsonSerializer.Deserialize<WeatherApi>(responseString);
 
                 if (currentWeather == null)
@@ -63,19 +64,19 @@ namespace DisasterPrediction.Application.Services
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Flood.ToLower()))
                 {
                     var disaster = CalculateFloodRisk(region, alertHistories, currentWeather);
-                    if (region.AlertSetting.ThresholdScore >= disaster.RiskScore)
+                    if (region.AlertSetting.ThresholdScore <= disaster.RiskScore)
                         result.Add(disaster);
                 }
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Wildfire.ToLower()))
                 {
                     var disaster = CalculateWildfireRiks(region, alertHistories, currentWeather);
-                    if (region.AlertSetting.ThresholdScore >= disaster.RiskScore)
+                    if (region.AlertSetting.ThresholdScore <= disaster.RiskScore)
                         result.Add(disaster);
                 }
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Earthquake.ToLower()))
                 {
                     var disaster = await CalculateEarthquake(region, alertHistories, currentDateTime);
-                    if (disaster != null && (region.AlertSetting.ThresholdScore >= disaster.RiskScore))
+                    if (disaster != null && (region.AlertSetting.ThresholdScore <= disaster.RiskScore))
                         result.Add(disaster);
                 }
             }

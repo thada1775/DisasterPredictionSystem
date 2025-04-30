@@ -4,6 +4,7 @@ using DisasterPrediction.Application.Common.Interfaces;
 using DisasterPrediction.Application.DTOs;
 using DisasterPrediction.Application.DTOs.Common;
 using DisasterPrediction.Application.Interfaces;
+using DisasterPrediction.Domain.Entities;
 using DisasterPrediction.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -78,11 +79,23 @@ namespace DisasterPrediction.Application.Services
                 RegionId = x.RegionId,
                 DisasterType = x.DisasterType,
                 RiskScore = x.RiskScore,
-                AlertMessage = "",
-                Timestamp = 
+                AlertMessage = FindAlertMessage(x.DisasterType),
+                Timestamp = currentDateTime,
             }).ToList();
 
-            //save data
+            //Send Email
+
+            var alertEntities = alertSendDtos.Select(x => new AlertHistory()
+            {
+                RegionId= x.RegionId,
+                RiskScore= x.RiskScore,
+                CreateDate = x.Timestamp,
+                DisasterType= x.DisasterType,
+                RiskLevel = x.DisasterType,
+            }).ToList();
+
+            await Context.AlertHistories.AddRangeAsync(alertEntities);
+            await Context.SaveChangesAsync();
         }
 
         #region Private Method
@@ -91,10 +104,20 @@ namespace DisasterPrediction.Application.Services
             string message = string.Empty;
             switch (disasterType)
             {
-                case SystemConstant.Disaster.Flood: message = 
+                case SystemConstant.Disaster.Flood: 
+                    message = _configuration.GetSection("AlertMessage:Flood").Value!;
+                    break;
+                case SystemConstant.Disaster.Wildfire:
+                    message = _configuration.GetSection("AlertMessage:Wildfire").Value!;
+                    break;
+                case SystemConstant.Disaster.Earthquake:
+                    message = _configuration.GetSection("AlertMessage:Earthquake").Value!;
+                    break;
                 default:
                     break;
             }
+
+            return message;
         }
 
         #endregion

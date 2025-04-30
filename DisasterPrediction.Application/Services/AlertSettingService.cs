@@ -55,7 +55,7 @@ namespace DisasterPrediction.Application.Services
 
         public async Task<AlertSettingDto> GetSettingAsync(string id)
         {
-            var entity = await Context.AlertSettings.FirstOrDefaultAsync(x => x.RegionId == id);
+            var entity = await Context.AlertSettings.FirstOrDefaultAsync(x => x.RegionId.ToLower() == id.ToLower());
             var result = Mapper.Map<AlertSettingDto>(entity);
 
             return result;
