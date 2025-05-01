@@ -46,6 +46,7 @@ namespace DisasterPrediction.Application.Services
 
             entity.LocationCoordinates.Latitude = request.LocationCoordinates.Latitude;
             entity.LocationCoordinates.Longitude = request.LocationCoordinates.Longitude;
+            entity.DisasterTypes = JsonSerializer.Serialize(request.DisasterTypes);
 
             await Context.SaveChangesAsync();
 
@@ -99,18 +100,20 @@ namespace DisasterPrediction.Application.Services
         }
 
         #region Private Method
-        private void ValidateCreate(RegionDto dto)
+        private void ValidateCreate(RegionDto request)
         {
             Dictionary<string, List<string>> errorValidation = new Dictionary<string, List<string>>();
-            if (dto == null)
+            if (request == null)
                 throw new NotFoundException("Region is required");
 
-            if (string.IsNullOrWhiteSpace(dto.RegionId))
+            if (string.IsNullOrWhiteSpace(request.RegionId))
                 InsertErrorValidation(errorValidation, "RegionId", "Required.");
-            if (dto.RegionId.Length > 50)
+            if (request.RegionId.Length > 50)
                 InsertErrorValidation(errorValidation, "RegionId", "Length more than 50");
-            if (ListUtil.IsEmptyList(dto.DisasterTypes))
+            if (ListUtil.IsEmptyList(request.DisasterTypes))
                 InsertErrorValidation(errorValidation, "DisasterTypes", "Required.");
+            if (!GeographyUtil.ValidateLatLon(request.LocationCoordinates.Latitude, request.LocationCoordinates.Longitude))
+                InsertErrorValidation(errorValidation, "LocationCoordinates", "Latitude or Longitude is invalid.");
 
             if (!ListUtil.IsEmptyList(errorValidation))
                 throw new ValidationException(errorValidation);

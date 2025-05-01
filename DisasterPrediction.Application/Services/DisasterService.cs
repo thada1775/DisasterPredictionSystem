@@ -48,18 +48,23 @@ namespace DisasterPrediction.Application.Services
                 if (string.IsNullOrWhiteSpace(_configuration["WeatherApiKey"]))
                     throw new ValidationException("ApiKey config missing.");
 
+                if (region.AlertSetting == null)
+                    continue;
+
                 Dictionary<string, string> queryStrings = new Dictionary<string, string>()
                 {
                     {"key",_configuration["WeatherApiKey"]! },
                     {"q",$"{region.LocationCoordinates?.Latitude},{region.LocationCoordinates?.Longitude}" }
                 };
 
-                var responseString = await _apiService.SendRequestAsync("http://api.weatherapi.com/v1/current.json", null, HttpMethod.Get, null, queryStrings);
-                var currentWeather = JsonSerializer.Deserialize<WeatherApi>(responseString);
+                var response = await _apiService.SendRequestAsync("http://api.weatherapi.com/v1/current.json", null, HttpMethod.Get, null, queryStrings);
+                if (!response.IsSuccessStatusCode)
+                    throw new InternalServerException(await response.Content.ReadAsStringAsync());
+                var responseString = await response.Content.ReadAsStringAsync();
+                var currentWeather = JsonSerializer.Deserialize<WeatherApi>(await response.Content.ReadAsStringAsync());
 
                 if (currentWeather == null)
                     throw new ValidationException("Weather result not found");
-
 
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Flood.ToLower()))
                 {
@@ -148,8 +153,10 @@ namespace DisasterPrediction.Application.Services
                     {"endtime",currentDateTime.AddDays(1).ToString("yyyy-MM-dd") }
                 };
 
-            var responseString = await _apiService.SendRequestAsync("https://earthquake.usgs.gov/fdsnws/event/1/query", null, HttpMethod.Get, null, queryStrings);
-            var currentEarthquake = JsonSerializer.Deserialize<EarthquakeApi>(responseString);
+            var response = await _apiService.SendRequestAsync("https://earthquake.usgs.gov/fdsnws/event/1/query", null, HttpMethod.Get, null, queryStrings);
+            if (!response.IsSuccessStatusCode)
+                throw new InternalServerException(await response.Content.ReadAsStringAsync());
+            var currentEarthquake = JsonSerializer.Deserialize<EarthquakeApi>(await response.Content.ReadAsStringAsync());
 
             var matchedEarthquake = currentEarthquake?.features?.FirstOrDefault();
             if (matchedEarthquake == null)
@@ -158,7 +165,7 @@ namespace DisasterPrediction.Application.Services
             DisasterDto warning = new DisasterDto()
             {
                 RegionId = region.RegionId,
-                DisasterType = SystemConstant.Disaster.Flood,
+                DisasterType = SystemConstant.Disaster.Earthquake,
             };
 
             if (matchedEarthquake.properties.mag < 4.0)

@@ -15,7 +15,7 @@ namespace DisasterPrediction.Infrastructure.Services.Common
         {
             _httpClient = httpClient;
         }
-        public async Task<HttpResponseMessage> SendRequestAsync(string url, string? apiKey, HttpMethod method, object? requestBody = null, Dictionary<string, string> queryParams = null)
+        public async Task<HttpResponseMessage> SendRequestAsync(string url, string? apiKey, HttpMethod method, object? requestBody = null, Dictionary<string, string>? queryParams = null)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace DisasterPrediction.Infrastructure.Services.Common
                     request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
                 }
 
-                using var response = await _httpClient.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
 
                 return response;

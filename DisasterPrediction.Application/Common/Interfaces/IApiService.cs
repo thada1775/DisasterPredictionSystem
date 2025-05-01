@@ -8,6 +8,6 @@ namespace DisasterPrediction.Application.Common.Interfaces
 {
     public interface IApiService
     {
-        Task<HttpResponseMessage> SendRequestAsync(string url, string? apiKey, HttpMethod method, object? requestBody = null, Dictionary<string, string> queryParams = null);
+        Task<HttpResponseMessage> SendRequestAsync(string url, string? apiKey, HttpMethod method, object? requestBody = null, Dictionary<string, string>? queryParams = null);
     }
 }
