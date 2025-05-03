@@ -12,6 +12,7 @@ namespace DisasterPrediction.Application.DTOs.Auth
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string? TimeZoneId { get; set; } = "Asia/Bangkok";
+        public string TimeZoneId { get; set; } = "Asia/Bangkok";
+        public string? RegionId { get; set; }
     }
 }

@@ -50,10 +50,10 @@ namespace DisasterPrediction.Application.Common.BaseClass
                 timeZoneId = (await Context.Users.FindAsync(CurrentUserService.UserId))?.TimeZoneId ?? timeZoneId;
 
             var timeZone = TimeZoneInfo.FindSystemTimeZoneById(requestTimeZoneId ?? timeZoneId);
-            FindTypeConvertDateTime(obj,timeZone);
+            FindTypeConvertDateTime(obj, timeZone,true);
         }
 
-        public void FindTypeConvertDateTime<T>(T obj, TimeZoneInfo timeZone)
+        public void FindTypeConvertDateTime<T>(T obj, TimeZoneInfo timeZone, bool isConvertInput = false)
         {
             if (obj == null)
                 return;
@@ -63,12 +63,18 @@ namespace DisasterPrediction.Application.Common.BaseClass
             {
                 foreach (var item in enumerable)
                 {
-                    ConvertProperties(item, timeZone);
+                    if (isConvertInput)
+                        ConvertToUtc(item, timeZone);
+                    else
+                        ConvertProperties(item, timeZone);
                 }
             }
             else
             {
-                ConvertProperties(obj, timeZone);
+                if (isConvertInput)
+                    ConvertToUtc(obj, timeZone);
+                else
+                    ConvertProperties(obj, timeZone);
             }
         }
         public void InsertErrorValidation(Dictionary<string, List<string>> errorValidation, string key, string value)
@@ -79,6 +85,7 @@ namespace DisasterPrediction.Application.Common.BaseClass
                 errorValidation.Add(key, new List<string>() { value });
         }
 
+        #region Private Method
         private void ConvertProperties(object obj, TimeZoneInfo timeZone)
         {
             if (obj == null) return;
@@ -126,5 +133,34 @@ namespace DisasterPrediction.Application.Common.BaseClass
                 }
             }
         }
+        private void ConvertToUtc(object obj, TimeZoneInfo timeZone)
+        {
+            if (obj == null) return;
+
+            foreach (var property in obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (!property.CanWrite)
+                    continue;
+                if ((property.PropertyType.IsClass || typeof(IEnumerable).IsAssignableFrom(property.PropertyType)) && property.PropertyType != typeof(string))
+                {
+                    var nestedObject = property.GetValue(obj);
+                    FindTypeConvertDateTime(nestedObject, timeZone, true);
+                }
+                else if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
+                {
+                    var value = property.GetValue(obj);
+                    if (value is DateTime dateTime)
+                    {
+                        if (dateTime.Kind != DateTimeKind.Utc)
+                        {
+                            var utcTime = TimeZoneInfo.ConvertTimeToUtc(dateTime, timeZone);
+                            property.SetValue(obj, utcTime);
+                        }
+                        
+                    }
+                }
+            }
+        }
+        #endregion
     }
 }

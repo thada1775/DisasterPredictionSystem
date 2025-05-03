@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DisasterPrediction.Application.Common.BaseClass;
 using DisasterPrediction.Application.Common.Interfaces;
+using DisasterPrediction.Application.Common.Utils;
 using DisasterPrediction.Application.DTOs;
 using DisasterPrediction.Application.DTOs.Common;
 using DisasterPrediction.Application.Interfaces;
@@ -20,11 +21,13 @@ namespace DisasterPrediction.Application.Services
     {
         private readonly IApiService _apiService;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
         public AlertsService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper
-            , IApiService apiService, IConfiguration configuration) : base(context, currentUserService, mapper)
+            , IApiService apiService, IConfiguration configuration, IEmailService emailService) : base(context, currentUserService, mapper)
         {
             _apiService = apiService;
             _configuration = configuration;
+            _emailService = emailService;   
         }
 
         public async Task<SearchResult<AlertHistoryDto>> FindSummaryHistoryAsync(AlertHistoryFilterDto filter)
@@ -67,12 +70,17 @@ namespace DisasterPrediction.Application.Services
             return result;
         }
 
-        public async void SendWarningMessage()
+        public async Task SendWarningMessage()
         {
             var currentDateTime = DateTime.UtcNow;
             var disasterService = new DisasterService(Context, CurrentUserService, Mapper, _apiService, _configuration);
             var disasterRisks = await disasterService.GetDisasterRisk();
             var moreRisks = disasterRisks.Where(x => !x.AlertTriggered).ToList();
+            if (ListUtil.IsEmptyList(moreRisks))
+                return;
+
+            var riskRegions = moreRisks.Select(x => x.RegionId).ToHashSet();
+            var usersDic = Context.Users.Where(x => x.RegionId != null && riskRegions.Contains(x.RegionId)).ToLookup(x => x.RegionId!).ToDictionary(x => x.Key, y => y.ToList());
 
             var alertSendDtos = moreRisks.Select(x => new AlertSendDto()
             {
@@ -84,14 +92,27 @@ namespace DisasterPrediction.Application.Services
             }).ToList();
 
             //Send Email
+            //System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+            foreach (var alert in alertSendDtos)
+            {
+                if (usersDic.ContainsKey(alert.RegionId))
+                {
+                    var userRegions = usersDic[alert.RegionId];
+                    foreach (var userRegion in userRegions)
+                    {
+                        if (!string.IsNullOrWhiteSpace(userRegion.Email))
+                            await _emailService.SendEmailAsync(userRegion.Email, alert.DisasterType, alert.AlertMessage);
+                    }
+                }
+            }
 
-            var alertEntities = alertSendDtos.Select(x => new AlertHistory()
+            var alertEntities = moreRisks.Select(x => new AlertHistory()
             {
                 RegionId= x.RegionId,
                 RiskScore= x.RiskScore,
-                CreateDate = x.Timestamp,
+                CreateDate = currentDateTime,
                 DisasterType= x.DisasterType,
-                RiskLevel = x.DisasterType,
+                RiskLevel = x.RiskLevel ?? string.Empty,
             }).ToList();
 
             await Context.AlertHistories.AddRangeAsync(alertEntities);

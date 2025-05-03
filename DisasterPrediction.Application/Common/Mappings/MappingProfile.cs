@@ -19,6 +19,7 @@ namespace DisasterPrediction.Application.Common.Mappings
                 .ForMember(dest => dest.DisasterTypes, opt => opt.Ignore());
             CreateMap<LocationCoordinates, LocationCoordinatesDto>().ReverseMap();
             CreateMap<AlertSetting, AlertSettingDto>().ReverseMap();
+            CreateMap<AlertHistory, AlertHistoryDto>().ReverseMap();
         }
     }
 }

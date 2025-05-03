@@ -20,8 +20,11 @@ namespace DisasterPrediction.Application.Services
 {
     public class RegionService : BaseService, IRegionService
     {
-        public RegionService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper) : base(context, currentUserService, mapper)
+        private readonly ICacheService _cacheService;
+        private const string _regionCacheKey = "region_{0}";
+        public RegionService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper, ICacheService cacheService) : base(context, currentUserService, mapper)
         {
+            _cacheService = cacheService;
         }
 
         public async Task<RegionDto> CreateEntityAsync(RegionDto request)
@@ -66,11 +69,19 @@ namespace DisasterPrediction.Application.Services
 
         public async Task<RegionDto> GetEntityAsync(string id)
         {
+            var cacheKey = string.Format(_regionCacheKey, id);
+            var cachedRegion = await _cacheService.GetAsync<RegionDto>(cacheKey);
+
+            if (cachedRegion != null)
+                return cachedRegion;
+
             var entity = await Context.Regions.Where(x => x.RegionId == id).Include(x => x.LocationCoordinates).FirstOrDefaultAsync();
             var result = Mapper.Map<RegionDto>(entity);
 
             if (entity != null && !string.IsNullOrWhiteSpace(entity.DisasterTypes))
                 result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes) ?? new List<string>();
+
+            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(10));
 
             return result;
         }

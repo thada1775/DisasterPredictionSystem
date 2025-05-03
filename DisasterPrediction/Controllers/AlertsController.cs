@@ -27,5 +27,12 @@ namespace DisasterPrediction.API.Controllers
             var result = await _service.GetHistoryByRegionAsync(id);
             return Ok(result);
         }
+
+        [HttpPost("send")]
+        public async Task<IActionResult> SendAlert()
+        {
+            await _service.SendWarningMessage();
+            return Ok();
+        }
     }
 }

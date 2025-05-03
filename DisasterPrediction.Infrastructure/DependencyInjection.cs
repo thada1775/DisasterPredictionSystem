@@ -3,6 +3,7 @@ using DisasterPrediction.Application.Common.Interfaces.Auth;
 using DisasterPrediction.Application.Interfaces;
 using DisasterPrediction.Application.Services;
 using DisasterPrediction.Domain.Entities;
+using DisasterPrediction.Infrastructure.Common;
 using DisasterPrediction.Infrastructure.Data;
 using DisasterPrediction.Infrastructure.Services;
 using DisasterPrediction.Infrastructure.Services.Auth;
@@ -33,6 +34,14 @@ namespace DisasterPrediction.Infrastructure
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
+            // Redis Cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetSection("Redis")["ConnectionString"];
+            });
+
+            services.AddScoped<ICacheService, RedisCacheService>();
+
             services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
             services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
@@ -44,6 +53,8 @@ namespace DisasterPrediction.Infrastructure
             services.AddScoped<IDisasterService, DisasterService>();
 
             services.AddHttpClient<IApiService, ApiService>();
+            services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+            services.AddTransient<IEmailService, EmailService>();
 
             return services;
         }
