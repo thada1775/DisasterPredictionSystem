@@ -44,6 +44,10 @@ namespace DisasterPrediction.Application.Services
         public async Task<RegionDto> UpdateEntityAsync(RegionDto request)
         {
             var entity = await ValidateUpdate(request);
+
+            var cacheKey = string.Format(_regionCacheKey, request.RegionId);
+            await _cacheService.RemoveAsync(cacheKey);
+
             if (entity.LocationCoordinates == null)
                 entity.LocationCoordinates = new LocationCoordinates();
 
@@ -56,12 +60,17 @@ namespace DisasterPrediction.Application.Services
             var result = Mapper.Map<RegionDto>(entity);
             if (!string.IsNullOrWhiteSpace(entity.DisasterTypes))
                 result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes)!;
+
+            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(10));
             return result;
         }
 
         public async Task DeleteEntityAsync(string id)
         {
             var entity = await ValidateDelete(id);
+
+            var cacheKey = string.Format(_regionCacheKey, id);
+            await _cacheService.RemoveAsync(cacheKey);
 
             Context.Regions.Remove(entity);
             await Context.SaveChangesAsync();

@@ -8,6 +8,7 @@ namespace DisasterPrediction.API.Controllers
 {
     [ApiController]
     [Route("api/region")]
+    [Authorize(Roles ="Admin")]
     public class RegionController : ControllerBase
     {
         private readonly IRegionService _service;

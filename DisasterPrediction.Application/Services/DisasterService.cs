@@ -25,16 +25,19 @@ namespace DisasterPrediction.Application.Services
     {
         private readonly IApiService _apiService;
         private readonly IConfiguration _configuration;
+        private readonly ICacheService _cacheService;
+        private const string _riskRegionCacheKey = "riskRegionCal_{0}";
         public DisasterService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper, IApiService apiService
-            , IConfiguration configuration) : base(context, currentUserService, mapper)
+            , IConfiguration configuration, ICacheService cacheService) : base(context, currentUserService, mapper)
         {
             _apiService = apiService;
             _configuration = configuration;
+            _cacheService = cacheService;
         }
 
         public async Task<List<DisasterDto>> GetDisasterRisk()
         {
-            var allRegion = Context.Regions.Include(x => x.LocationCoordinates).Include(x => x.AlertSetting).ToList();
+            var allRegion = Context.Regions.Include(x => x.LocationCoordinates).Include(x => x.AlertSettings).ToList();
             if (ListUtil.IsEmptyList(allRegion))
                 throw new ValidationException("Region not found.");
 
@@ -48,8 +51,17 @@ namespace DisasterPrediction.Application.Services
                 if (string.IsNullOrWhiteSpace(_configuration["WeatherApiKey"]))
                     throw new ValidationException("ApiKey config missing.");
 
-                if (region.AlertSetting == null)
+                if (ListUtil.IsEmptyList(region.AlertSettings))
                     continue;
+
+                var cacheKey = string.Format(_riskRegionCacheKey, region.RegionId);
+                var cachedRiskRegion = await _cacheService.GetAsync<List<DisasterDto>>(cacheKey);
+
+                if (cachedRiskRegion != null)
+                {
+                    result.AddRange(cachedRiskRegion);
+                    continue;
+                }
 
                 Dictionary<string, string> queryStrings = new Dictionary<string, string>()
                 {
@@ -69,21 +81,26 @@ namespace DisasterPrediction.Application.Services
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Flood.ToLower()))
                 {
                     var disaster = CalculateFloodRisk(region, alertHistories, currentWeather);
-                    if (region.AlertSetting.ThresholdScore <= disaster.RiskScore)
+                    var alertSetting = region.AlertSettings.FirstOrDefault(x => x.DisasterType.ToLower() == SystemConstant.Disaster.Flood.ToLower());
+                    if (alertSetting?.ThresholdScore <= disaster.RiskScore)
                         result.Add(disaster);
                 }
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Wildfire.ToLower()))
                 {
                     var disaster = CalculateWildfireRiks(region, alertHistories, currentWeather);
-                    if (region.AlertSetting.ThresholdScore <= disaster.RiskScore)
+                    var alertSetting = region.AlertSettings.FirstOrDefault(x => x.DisasterType.ToLower() == SystemConstant.Disaster.Wildfire.ToLower());
+                    if (alertSetting?.ThresholdScore <= disaster.RiskScore)
                         result.Add(disaster);
                 }
                 if (region.DisasterTypes.ToLower().Contains(SystemConstant.Disaster.Earthquake.ToLower()))
                 {
                     var disaster = await CalculateEarthquake(region, alertHistories, currentDateTime);
-                    if (disaster != null && (region.AlertSetting.ThresholdScore <= disaster.RiskScore))
+                    var alertSetting = region.AlertSettings.FirstOrDefault(x => x.DisasterType.ToLower() == SystemConstant.Disaster.Earthquake.ToLower());
+                    if (disaster != null && (alertSetting?.ThresholdScore <= disaster.RiskScore))
                         result.Add(disaster);
                 }
+
+                await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));
             }
 
             return result;

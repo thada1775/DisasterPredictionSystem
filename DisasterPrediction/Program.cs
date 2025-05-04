@@ -56,6 +56,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await ApplicationDbContextSeed.SeedRolesAndAdminAsync(services);
+}
+
 var cultureInfo = new CultureInfo("en-US");
 //var cultureInfo = new CultureInfo("th-TH");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;

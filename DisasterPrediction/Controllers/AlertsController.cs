@@ -1,11 +1,13 @@
 ﻿using DisasterPrediction.Application.DTOs;
 using DisasterPrediction.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DisasterPrediction.API.Controllers
 {
     [ApiController]
     [Route("api/alerts")]
+    [Authorize]
     public class AlertsController : ControllerBase
     {
         private readonly IAlertsService _service;

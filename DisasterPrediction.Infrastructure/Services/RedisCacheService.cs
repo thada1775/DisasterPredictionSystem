@@ -41,6 +41,7 @@ namespace DisasterPrediction.Infrastructure.Services
         public async Task RemoveAsync(string key)
         {
             await _cache.RemoveAsync(key);
+            await _cache.();
         }
     }
 }

@@ -22,12 +22,14 @@ namespace DisasterPrediction.Application.Services
         private readonly IApiService _apiService;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly ICacheService _cacheService;
         public AlertsService(IApplicationDbContext context, ICurrentUserService currentUserService, IMapper mapper
-            , IApiService apiService, IConfiguration configuration, IEmailService emailService) : base(context, currentUserService, mapper)
+            , IApiService apiService, IConfiguration configuration, IEmailService emailService, ICacheService cacheService) : base(context, currentUserService, mapper)
         {
             _apiService = apiService;
             _configuration = configuration;
             _emailService = emailService;   
+            _cacheService = cacheService;
         }
 
         public async Task<SearchResult<AlertHistoryDto>> FindSummaryHistoryAsync(AlertHistoryFilterDto filter)
@@ -73,7 +75,7 @@ namespace DisasterPrediction.Application.Services
         public async Task SendWarningMessage()
         {
             var currentDateTime = DateTime.UtcNow;
-            var disasterService = new DisasterService(Context, CurrentUserService, Mapper, _apiService, _configuration);
+            var disasterService = new DisasterService(Context, CurrentUserService, Mapper, _apiService, _configuration,_cacheService);
             var disasterRisks = await disasterService.GetDisasterRisk();
             var moreRisks = disasterRisks.Where(x => !x.AlertTriggered).ToList();
             if (ListUtil.IsEmptyList(moreRisks))

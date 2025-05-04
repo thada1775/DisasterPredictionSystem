@@ -13,10 +13,10 @@ namespace DisasterPrediction.Infrastructure.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<AlertSetting> builder)
         {
-            builder.HasKey(x => x.RegionId);
+            builder.HasKey(x => new { x.RegionId, x.DisasterType });
             builder.HasOne(x => x.Region)
-                .WithOne(x => x.AlertSetting)
-                .HasForeignKey<AlertSetting>(x => x.RegionId);
+                .WithMany(x => x.AlertSettings)
+                .HasForeignKey(x => x.RegionId);
         }
     }
 }
