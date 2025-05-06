@@ -8,6 +8,8 @@ using System.Net.Mail;
 using System.Net;
 using System.Text;
 using Serilog;
+using DisasterPrediction.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +73,15 @@ CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 if (app.Environment.IsDevelopment())
 {
     
+}
+else
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
+        dbContext.Database.Migrate();
+    }
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

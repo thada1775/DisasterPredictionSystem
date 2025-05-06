@@ -44,7 +44,7 @@ namespace DisasterPrediction.Application.Services
             var currentDateTime = DateTime.UtcNow;
             var result = new List<DisasterDto>();
 
-            var alertHistories = await Context.AlertHistories.Where(x => (currentDateTime - x.CreateDate).Minutes < 180).ToListAsync();
+            var alertHistories = await Context.AlertHistories.Where(x => (currentDateTime - x.CreateDate).TotalMinutes < 180).ToListAsync();
 
             foreach (var region in allRegion)
             {
@@ -100,8 +100,10 @@ namespace DisasterPrediction.Application.Services
                         result.Add(disaster);
                 }
 
-                await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));
+                await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(1));
             }
+
+            await FormatProperties(result);
 
             return result;
         }
@@ -141,9 +143,11 @@ namespace DisasterPrediction.Application.Services
             DisasterDto warning = new DisasterDto()
             {
                 RegionId = region.RegionId,
-                DisasterType = SystemConstant.Disaster.Flood,
+                DisasterType = SystemConstant.Disaster.Wildfire,
                 RiskScore = (short)((currentWeather.current.temp_c * 2) - currentWeather.current.humidity)
             };
+
+            warning.RiskScore = (short)(warning.RiskScore < 0 ? 0 : warning.RiskScore);
 
             if (warning.RiskScore <= 30)
                 warning.RiskLevel = SystemConstant.RiksLevel.Low;

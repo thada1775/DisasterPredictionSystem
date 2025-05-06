@@ -69,6 +69,7 @@ namespace DisasterPrediction.Application.Services
                 return new List<AlertHistoryDto>();
             var result = Mapper.Map<List<AlertHistoryDto>>(await Context.AlertHistories.Where(x => x.RegionId == id).ToListAsync());
 
+            await FormatProperties(result);
             return result;
         }
 
@@ -94,7 +95,7 @@ namespace DisasterPrediction.Application.Services
             }).ToList();
 
             //Send Email
-            //System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+            var emailTasks = new List<Task>();
             foreach (var alert in alertSendDtos)
             {
                 if (usersDic.ContainsKey(alert.RegionId))
@@ -103,10 +104,15 @@ namespace DisasterPrediction.Application.Services
                     foreach (var userRegion in userRegions)
                     {
                         if (!string.IsNullOrWhiteSpace(userRegion.Email))
-                            await _emailService.SendEmailAsync(userRegion.Email, alert.DisasterType, alert.AlertMessage);
+                        {
+                            var task = _emailService.SendEmailAsync(userRegion.Email, alert.DisasterType, alert.AlertMessage);
+                            emailTasks.Add(task);
+                        }
                     }
                 }
             }
+
+            await Task.WhenAll(emailTasks);
 
             var alertEntities = moreRisks.Select(x => new AlertHistory()
             {
