@@ -30,7 +30,7 @@ namespace DisasterPrediction.Infrastructure
                 }
             }
 
-            var adminUser = new ApplicationUser { UserName = "thada.fordev@gmail.com", Email = "thada.fordev@gmail.com", EmailConfirmed = true };
+            var adminUser = new ApplicationUser { UserName = "thada.fordev@gmail.com", Email = "thada.fordev@gmail.com",FirstName = "Thada", LastName = "Jaipradite", EmailConfirmed = true };
             var password = "Secret123!";
 
             var existAdmin = await userManager.FindByEmailAsync(adminUser.Email);

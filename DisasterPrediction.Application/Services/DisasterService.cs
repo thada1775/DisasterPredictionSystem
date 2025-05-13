@@ -208,7 +208,7 @@ namespace DisasterPrediction.Application.Services
             var earthquakeDateTime = DateTimeOffset.FromUnixTimeMilliseconds(matchedEarthquake.properties.time).UtcDateTime;
 
             if (alertHistories.Any(x => x.RegionId == region.RegionId && x.DisasterType.ToLower().Contains(SystemConstant.Disaster.Earthquake.ToLower())
-                                   && x.CreateDate < earthquakeDateTime))
+                                   && x.CreateDate > earthquakeDateTime))
                 warning.AlertTriggered = true;
 
             return warning;

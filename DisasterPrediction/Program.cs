@@ -58,12 +58,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    await ApplicationDbContextSeed.SeedRolesAndAdminAsync(services);
-}
-
 var cultureInfo = new CultureInfo("en-US");
 //var cultureInfo = new CultureInfo("th-TH");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
@@ -72,7 +66,7 @@ CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    
+
 }
 else
 {
@@ -82,6 +76,12 @@ else
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
         dbContext.Database.Migrate();
     }
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await ApplicationDbContextSeed.SeedRolesAndAdminAsync(services);
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
