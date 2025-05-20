@@ -22,6 +22,7 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
     .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.Seq(builder.Configuration["Seq:ServerUrl"] ?? throw new Exception("SeqSetting is required"), apiKey: builder.Configuration["Seq:ApiKey"])
     .Enrich.FromLogContext()
     .CreateLogger();
 

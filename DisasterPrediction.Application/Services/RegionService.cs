@@ -61,7 +61,7 @@ namespace DisasterPrediction.Application.Services
             if (!string.IsNullOrWhiteSpace(entity.DisasterTypes))
                 result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes)!;
 
-            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(10));
+            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));
             return result;
         }
 
@@ -90,7 +90,7 @@ namespace DisasterPrediction.Application.Services
             if (entity != null && !string.IsNullOrWhiteSpace(entity.DisasterTypes))
                 result.DisasterTypes = JsonSerializer.Deserialize<List<string>>(entity.DisasterTypes) ?? new List<string>();
 
-            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(10));
+            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));
 
             return result;
         }

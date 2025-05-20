@@ -100,7 +100,7 @@ namespace DisasterPrediction.Application.Services
                         result.Add(disaster);
                 }
 
-                await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(1));
+                await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromMinutes(15));
             }
 
             await FormatProperties(result);
